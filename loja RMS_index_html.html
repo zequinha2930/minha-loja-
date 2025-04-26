@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>R.M.S loja </title>
+  <style>
+    /* Estilos continuam os mesmos */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      padding: 20px;
+    }
+    header {
+      background-color: #4CAF50;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    header h1 {
+      color: white;
+    }
+    main {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    form, .barraBusca, .carrinho, .contato, .pagamento {
+      margin-bottom: 30px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    form input, .barraBusca input, .contato input, .contato textarea {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    form button, .contato button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .contato {
+      background-color: #f1f1f1;
+    }
+    .pagamento ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .pagamento li {
+      margin-bottom: 10px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Minha Loja</h1>
+</header>
+
+<main>
+  <!-- Carrinho de compras -->
+  <div class="carrinho">
+    <h2>Carrinho 🛒</h2>
+    <p id="carrinhoQuantidade">Itens: 0</p>
+    <p id="carrinhoTotal">Total: R$ 0.00</p>
+    <ul id="listaCarrinho"></ul>
+    <button onclick="esvaziarCarrinho()">Esvaziar Carrinho</button>
+  </div>
+
+  <!-- Barra de busca -->
+  <div class="barraBusca">
+    <h2>Buscar Produto</h2>
+    <input type="text" id="buscarProduto" placeholder="Digite o nome do produto...">
+  </div>
+
+  <!-- Formulário de contato com WhatsApp -->
+  <div class="contato">
+    <h2>Contato pelo WhatsApp</h2>
+    <p>Para entrar em contato, clique no link abaixo:</p>
+    <a href="https://wa.me/5535999428643" target="_blank">
+      <button>Falar com Vendedor no WhatsApp</button>
+    </a>
+  </div>
+
+  <!-- Formas de pagamento (somente PIX) -->
+  <div class="pagamento">
+    <h2>Forma de Pagamento</h2>
+    <ul>
+      <li>Pagamento via <strong>PIX</strong></li>
+      <li><img src="https://upload.wikimedia.org/wikipedia/commons/3/37/Logo_Pagamento_PIX.png" alt="PIX" style="width: 150px;"></li>
+    </ul>
+  </div>
+
+  <form id="formProduto">
+    <h2>Cadastrar Novo Produto</h2>
+    <input type="text" id="nomeProduto" placeholder="Nome do Produto" required>
+    <input type="number" id="precoProduto" placeholder="Preço do Produto" step="0.01" required>
+    <input type="text" id="imagemProduto" placeholder="URL da Imagem" required>
+    <button type="submit">Adicionar Produto</button>
+  </form>
+
+  <section class="produtos" id="listaProdutos">
+    <!-- Produtos aparecem aqui -->
+  </section>
+
+</main>
+
+<footer>
+  <p>&copy; 2025 Minha Loja</p>
+</footer>
+
+<script>
+  let produtos = [];
+  let carrinho = {};
+
+  function carregarProdutos() {
+    const produtosSalvos = localStorage.getItem('produtos');
+    if (produtosSalvos) {
+      produtos = JSON.parse(produtosSalvos);
+    }
+    renderizarProdutos();
+  }
+
+  function salvarProdutos() {
+    localStorage.setItem('produtos', JSON.stringify(produtos));
+  }
+
+  function renderizarProdutos(filtro = '') {
+    const lista = document.getElementById('listaProdutos');
+    lista.innerHTML = '';
+
+    produtos
+      .filter(produto => produto.nome.toLowerCase().includes(filtro.toLowerCase()))
+      .forEach((produto, index) => {
+        lista.innerHTML += `
+          <div class="produto">
+            <img src="${produto.imagem}" alt="${produto.nome}">
+            <h2>${produto.nome}</h2>
+            <span>R$ ${produto.preco.toFixed(2)}</span>
+            <div class="botoes">
+              <button class="adicionarCarrinho" onclick="adicionarAoCarrinho(${index})">Adicionar ao Carrinho</button>
+              <button class="editar" onclick="editarProduto(${index})">Editar</button>
+              <button class="excluir" onclick="excluirProduto(${index})">Excluir</button>
+            </div>
+          </div>
+        `;
+      });
+  }
+
+  document.getElementById('formProduto').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const nome = document.getElementById('nomeProduto').value;
+    const preco = parseFloat(document.getElementById('precoProduto').value);
+    const imagem = document.getElementById('imagemProduto').value;
+
+    produtos.push({ nome, preco, imagem });
+
+    salvarProdutos();
+    renderizarProdutos();
+    document.getElementById('formProduto').reset();
+  });
+
+  function editarProduto(index) {
+    const produto = produtos[index];
+
+    const novoNome = prompt('Editar Nome:', produto.nome);
+    const novoPreco = prompt('Editar Preço:', produto.preco);
+    const novaImagem = prompt('Editar Imagem (URL):', produto.imagem);
+
+    if (novoNome && novoPreco && novaImagem) {
+      produtos[index] = {
+        nome: novoNome,
+        preco: parseFloat(novoPreco),
+        imagem: novaImagem
+      };
+      salvarProdutos();
+      renderizarProdutos();
+    }
+  }
+
+  function excluirProduto(index) {
+    if (confirm('Tem certeza que deseja excluir este produto?')) {
+      produtos.splice(index, 1);
+      salvarProdutos();
+      renderizarProdutos();
+    }
+  }
+
+  function adicionarAoCarrinho(index) {
+    const produto = produtos[index];
+
+    if (carrinho[produto.nome]) {
+      carrinho[produto.nome].quantidade += 1;
+    } else {
+      carrinho[produto.nome] = {
+        preco: produto.preco,
+        quantidade: 1
+      };
+    }
+    atualizarCarrinho();
+  }
+
+  function atualizarCarrinho() {
+    const listaCarrinho = document.getElementById('listaCarrinho');
+    listaCarrinho.innerHTML = '';
+
+    let totalItens = 0;
+    let totalPreco = 0;
+
+    for (const nome in carrinho) {
+      const item = carrinho[nome];
+      totalItens += item.quantidade;
+      totalPreco += item.preco * item.quantidade;
+
+      listaCarrinho.innerHTML += `<li>${nome} - ${item.quantidade}x - R$ ${(item.preco * item.quantidade).toFixed(2)}</li>`;
+    }
+
+    document.getElementById('carrinhoQuantidade').textContent = `Itens: ${totalItens}`;
+    document.getElementById('carrinhoTotal').textContent = `Total: R$ ${totalPreco.toFixed(2)}`;
+  }
+
+  function esvaziarCarrinho() {
+    if (confirm('Deseja esvaziar o carrinho?')) {
+      carrinho = {};
+      atualizarCarrinho();
+    }
+  }
+
+  document.getElementById('buscarProduto').addEventListener('input', function() {
+    const filtro = this.value;
+    renderizarProdutos(filtro);
+  });
+
+  window.onload = carregarProdutos;
+</script>
+
+</body>
+</html>
